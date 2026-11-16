@@ -1,0 +1,101 @@
+
+# ==============================
+# Python
+# ==============================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# ==============================
+# Virtual Environment
+# ==============================
+venv/
+.venv/
+env/
+ENV/
+
+# ==============================
+# Environment Variables / Secrets
+# ==============================
+.env
+.env.*
+!.env.example
+
+# ==============================
+# IDE / Editors
+# ==============================
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ==============================
+# Testing
+# ==============================
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# ==============================
+# Type Checking / Linting
+# ==============================
+.mypy_cache/
+.ruff_cache/
+.pyright/
+
+# ==============================
+# Build / Distribution
+# ==============================
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# ==============================
+# Logs
+# ==============================
+*.log
+logs/
+
+# ==============================
+# Jupyter Notebook
+# ==============================
+.ipynb_checkpoints/
+
+# ==============================
+# Database Files
+# ==============================
+*.sqlite
+*.sqlite3
+*.db
+
+# ==============================
+# OS Generated Files
+# ==============================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ==============================
+# Temporary Files
+# ==============================
+*.tmp
+*.bak
+*.orig
+.cache/
+
+# ==============================
+# Alembic
+# Keep migration scripts tracked.
+# ==============================
+# migrations/versions/__pycache__/
+
+# ==============================
+# Local Uploads
+# ==============================
+uploads/
+media/
