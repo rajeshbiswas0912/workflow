@@ -7,6 +7,7 @@ from app.config.settings import settings
 from app.config.database import engine
 from app.utils.responses import register_exception_handlers
 from app.controllers import health_controller
+from app.utils.router import api_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -45,6 +46,7 @@ def create_app() -> FastAPI:
 
     register_exception_handlers(app)
     app.include_router(health_controller.router)
+    app.include_router(api_router, prefix=settings.API_V1_PREFIX)
     return app
 
 app = create_app()

@@ -5,7 +5,13 @@ from sqlalchemy import create_engine, pool
 from app.config.settings import settings
 from app.config.database import Base
 
+from app.models.customer import Customer
+from app.models.order import Order
+from app.models.order_item import OrderItem
+from app.models.product import Product
 from app.models.role import Role
+from app.models.department import Department
+from app.models.employee import Employee
 
 config = context.config
 

@@ -37,7 +37,11 @@ class Settings(BaseSettings):
     SECRET_KEY: SecretStr
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=30, gt=0)
+    REFRESH_TOKEN_EXPIRE_DAYS: int = Field(default=30, gt=0)
     BCRYPT_ROUNDS: int = Field(default=12, ge=4, le=16)
+
+    ADMIN_EMAIL: str
+    ADMIN_PASSWORD: str
 
     @field_validator("SECRET_KEY")
     @classmethod

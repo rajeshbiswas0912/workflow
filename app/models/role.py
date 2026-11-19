@@ -1,8 +1,12 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import Boolean, DateTime, String, text, func, true
 from datetime import datetime, timezone
+from typing import TYPE_CHECKING
 
 from app.config.database import Base
+
+if TYPE_CHECKING:
+    from app.models.employee import Employee
 
 class Role(Base):
     __tablename__ = "roles"
@@ -29,4 +33,8 @@ class Role(Base):
         default=None,
     )
 
-    # One Role -> Many Employees
+    # Relationships
+    employees: Mapped[list["Employee"]] = relationship(
+        "Employee",
+        back_populates="role",
+    )
