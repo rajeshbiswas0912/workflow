@@ -7,6 +7,7 @@ from app.config.database import Base
 
 if TYPE_CHECKING:
     from app.models.employee import Employee
+    from app.models.role_permission import RolePermission
 
 class Role(Base):
     __tablename__ = "roles"
@@ -37,4 +38,8 @@ class Role(Base):
     employees: Mapped[list["Employee"]] = relationship(
         "Employee",
         back_populates="role",
+    )
+    permissions: Mapped[list["RolePermission"]] = relationship(
+        "RolePermission", back_populates="role",
+        cascade="all, delete-orphan", passive_deletes=True,
     )

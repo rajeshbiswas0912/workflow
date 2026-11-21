@@ -42,6 +42,9 @@ class Settings(BaseSettings):
 
     ADMIN_EMAIL: str
     ADMIN_PASSWORD: str
+    ADMIN_ROLE_ID: int
+
+    LOW_STOCK_THRESHOLD: int
 
     @field_validator("SECRET_KEY")
     @classmethod

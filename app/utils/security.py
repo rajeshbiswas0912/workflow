@@ -24,35 +24,25 @@ def get_dummy_hash() -> str:
     so login timing does not reveal which emails are registered."""
     return hash_password("timing-attack-protection")
 
-def create_access_token(user_id: int) -> tuple[str, int]:
-    """Return (token, expires_in_seconds)."""
-    expires_delta = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+def _create_token(sub: str, expires_seconds: int, token_type: str) -> str:
     now = datetime.now(timezone.utc)
     payload = {
-        "sub": str(user_id),
-        "iat": now,
-        "exp": now + expires_delta,
+        "sub": sub,
+        "type": token_type,
+        "iat": int(now.timestamp()),
+        "exp": int((now + timedelta(seconds=expires_seconds)).timestamp()),
     }
-    token = jwt.encode(
-        payload,
-        settings.SECRET_KEY.get_secret_value(),
-        algorithm=settings.JWT_ALGORITHM,
-    )
+    return jwt.encode(payload, settings.SECRET_KEY.get_secret_value(), algorithm=settings.JWT_ALGORITHM)
+
+def create_access_token(user_id: int) -> tuple[str, int]:
+    expires_delta = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    token = _create_token(str(user_id), int(expires_delta.total_seconds()), "access")
     return token, int(expires_delta.total_seconds())
 
 def create_refresh_token(user_id: int) -> tuple[str, int]:
-    """Return (refresh_token, expires_in_seconds)."""
     expires_delta = timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
-    now = datetime.now(timezone.utc)
-    payload = {
-        "sub": str(user_id),
-        "type": "refresh",
-        "iat": now,
-        "exp": now + expires_delta,
-    }
-    token = jwt.encode(
-        payload,
-        settings.SECRET_KEY.get_secret_value(),
-        algorithm=settings.JWT_ALGORITHM,
-    )
+    token = _create_token(str(user_id), int(expires_delta.total_seconds()), "refresh")
     return token, int(expires_delta.total_seconds())
+
+def decode_token(token: str) -> dict:
+    return jwt.decode(token, settings.SECRET_KEY.get_secret_value(), algorithms=[settings.JWT_ALGORITHM])

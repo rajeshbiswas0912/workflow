@@ -1,90 +1,56 @@
-import re
-from datetime import datetime
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
+from decimal import Decimal
+
+from pydantic import BaseModel, ConfigDict, Field, model_validator
+
+from app.schemas.common import UTCDateTime
+
 
 class CustomerCreate(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
     name: str = Field(min_length=1, max_length=100)
-    email: EmailStr
+    email: str = Field(min_length=3, max_length=255)
     phone: str | None = Field(default=None, max_length=20)
     city: str | None = Field(default=None, max_length=100)
-    address: str | None = None
-
-    @field_validator("name")
-    @classmethod
-    def _strip_name(cls, value: str) -> str:
-        value = value.strip()
-        if not value:
-            raise ValueError("Customer name must not be blank")
-        return value
-
-    @field_validator("phone")
-    @classmethod
-    def _validate_phone(cls, value: str | None) -> str | None:
-        if value is None:
-            return None
-        digits = re.sub(r"\s+", "", value.strip())
-        if not digits:
-            return None
-        if not re.fullmatch(r"\d{10}", digits):
-            raise ValueError("Enter a 10-digit mobile number.")
-        return digits
-
-    @field_validator("city", "address")
-    @classmethod
-    def _strip_optional_strings(cls, value: str | None) -> str | None:
-        if value is None:
-            return None
-        value = value.strip()
-        return value or None
+    address: str | None = Field(default=None, max_length=2000)
 
 
 class CustomerUpdate(BaseModel):
+    """Omitted field = keep current value. null clears phone, city and address."""
+    model_config = ConfigDict(str_strip_whitespace=True)
+
     name: str | None = Field(default=None, min_length=1, max_length=100)
-    email: EmailStr | None = None
+    email: str | None = Field(default=None, min_length=3, max_length=255)
     phone: str | None = Field(default=None, max_length=20)
     city: str | None = Field(default=None, max_length=100)
-    address: str | None = None
+    address: str | None = Field(default=None, max_length=2000)
 
-    @field_validator("name")
-    @classmethod
-    def _strip_name(cls, value: str | None) -> str | None:
-        if value is None:
-            return None
-        value = value.strip()
-        if not value:
-            raise ValueError("Customer name must not be blank")
-        return value
-
-    @field_validator("phone")
-    @classmethod
-    def _validate_phone(cls, value: str | None) -> str | None:
-        if value is None:
-            return None
-        digits = re.sub(r"\s+", "", value.strip())
-        if not digits:
-            return None
-        if not re.fullmatch(r"\d{10}", digits):
-            raise ValueError("Enter a 10-digit mobile number.")
-        return digits
-
-    @field_validator("city", "address")
-    @classmethod
-    def _strip_optional_strings(cls, value: str | None) -> str | None:
-        if value is None:
-            return None
-        value = value.strip()
-        return value or None
+    @model_validator(mode="after")
+    def check_fields(self):
+        if not self.model_fields_set:
+            raise ValueError("Provide at least one field to update")
+        for f in ("name", "email"):
+            if f in self.model_fields_set and getattr(self, f) is None:
+                raise ValueError(f"{f} can't be null")
+        return self
 
 
-class CustomerResponse(BaseModel):
+class CustomerItem(BaseModel):
     id: int
     name: str
-    email: EmailStr
-    phone: str | None
-    city: str | None
-    address: str | None
-    created_at: datetime
-    updated_at: datetime
-    deleted_at: datetime | None
+    email: str
+    phone: str | None = None
+    city: str | None = None
+    address: str | None = None
+    order_count: int = 0
+    total_spent: Decimal = Decimal("0.00")
+    created_at: UTCDateTime
+    updated_at: UTCDateTime
+    deleted_at: UTCDateTime | None = None
 
-    model_config = ConfigDict(from_attributes=True)
+
+class CustomerList(BaseModel):
+    items: list[CustomerItem]
+    total: int
+    limit: int
+    offset: int

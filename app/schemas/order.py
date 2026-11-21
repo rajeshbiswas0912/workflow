@@ -1,99 +1,137 @@
-from datetime import date, datetime
+# app/schemas/order_api.py
+from datetime import date
 from decimal import Decimal
-from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator
+
+from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
+
 from app.enums.order import OrderStatus
-from app.schemas.order_item import OrderItemCreate, OrderItemResponse
+from app.schemas.common import UTCDateTime
 
+GST_RATE = Decimal("0.18")
 
-class OrderCustomerSummary(BaseModel):
-    id: int
-    name: str
-    email: str
-    phone: str | None = None
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class OrderEmployeeSummary(BaseModel):
-    id: int
-    first_name: str
-    last_name: str
-
-    @computed_field
-    @property
-    def full_name(self) -> str:
-        return f"{self.first_name} {self.last_name}"
-
-    model_config = ConfigDict(from_attributes=True)
 
 class OrderCreate(BaseModel):
-    customer_id: int = Field(gt=0)
-    handled_by_id: int = Field(gt=0)
-    order_date: date
-    status: OrderStatus = OrderStatus.PENDING
-    notes: str | None = None
-    items: list[OrderItemCreate] = Field(min_length=1)
+    model_config = ConfigDict(str_strip_whitespace=True)
 
-    @field_validator("notes")
-    @classmethod
-    def _strip_notes(cls, value: str | None) -> str | None:
-        if value is None:
-            return None
-        value = value.strip()
-        return value or None
+    customer_id: int
+    handled_by_id: int | None = None
+    order_date: date | None = None
+    notes: str | None = Field(default=None, max_length=2000)
 
 
 class OrderUpdate(BaseModel):
-    customer_id: int | None = Field(default=None, gt=0)
-    handled_by_id: int | None = Field(default=None, gt=0)
+    """Omitted field = keep current value. null clears notes only."""
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    customer_id: int | None = None
+    handled_by_id: int | None = None
     order_date: date | None = None
-    status: OrderStatus | None = None
-    notes: str | None = None
-    items: list[OrderItemCreate] | None = Field(default=None, min_length=1)
+    notes: str | None = Field(default=None, max_length=2000)
 
-    @field_validator("notes")
-    @classmethod
-    def _strip_notes(cls, value: str | None) -> str | None:
-        if value is None:
-            return None
-        value = value.strip()
-        return value or None
+    @model_validator(mode="after")
+    def check_fields(self):
+        if not self.model_fields_set:
+            raise ValueError("Provide at least one field to update")
+        for f in ("customer_id", "handled_by_id", "order_date"):
+            if f in self.model_fields_set and getattr(self, f) is None:
+                raise ValueError(f"{f} can't be null")
+        return self
 
 
-class OrderResponse(BaseModel):
+class OrderStatusUpdate(BaseModel):
+    status: OrderStatus
+
+
+class OrderItemCreate(BaseModel):
+    product_id: int
+    quantity: int = Field(ge=1, le=1_000_000)
+
+
+class OrderItemUpdate(BaseModel):
+    quantity: int = Field(ge=1, le=1_000_000)
+
+
+def _label(status: OrderStatus) -> str:
+    return status.value.replace("_", " ").capitalize()
+
+
+class OrderListItem(BaseModel):
     id: int
     order_number: str
     customer_id: int
+    customer_name: str
     handled_by_id: int
+    handled_by_name: str
     order_date: date
     total_amount: Decimal
     status: OrderStatus
-    notes: str | None
-    customer: OrderCustomerSummary | None = None
-    handled_by: OrderEmployeeSummary | None = None
-    items: list[OrderItemResponse] = []
-    created_at: datetime
-    updated_at: datetime
-    deleted_at: datetime | None
+    item_count: int
+    created_at: UTCDateTime
 
     @computed_field
     @property
     def status_label(self) -> str:
-        return self.status.label
+        return _label(self.status)
+
+
+class OrderPage(BaseModel):
+    items: list[OrderListItem]
+    total: int
+    limit: int
+    offset: int
+    status_counts: dict[str, int]
+
+
+class OrderLine(BaseModel):
+    id: int
+    product_id: int
+    product_name: str
+    product_sku: str | None = None
+    quantity: int
+    unit_price: Decimal
+    subtotal: Decimal
+
+
+class OrderCustomer(BaseModel):
+    id: int
+    name: str
+    email: str
+    city: str | None = None
+
+
+class OrderEmployee(BaseModel):
+    id: int
+    name: str
+    job_title: str | None = None
+
+
+class OrderActivity(BaseModel):
+    event: str
+    by: str
+    at: UTCDateTime
+
+
+class OrderDetail(BaseModel):
+    id: int
+    order_number: str
+    status: OrderStatus
+    order_date: date
+    notes: str | None = None
+    customer: OrderCustomer
+    handled_by: OrderEmployee
+    items: list[OrderLine]
+    item_count: int
+    subtotal: Decimal
+    gst_rate_percent: Decimal
+    gst_amount: Decimal
+    total_amount: Decimal
+    allowed_next_statuses: list[OrderStatus]
+    activity: list[OrderActivity]
+    created_at: UTCDateTime
+    updated_at: UTCDateTime
+    deleted_at: UTCDateTime | None = None
 
     @computed_field
     @property
-    def line_items_count(self) -> int:
-        return len(self.items)
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-# --- Top Filter Tabs Count Schema ---
-class OrderStatusCounts(BaseModel):
-    all: int = 0
-    pending: int = 0
-    confirmed: int = 0
-    shipped: int = 0
-    delivered: int = 0
-    cancelled: int = 0
+    def status_label(self) -> str:
+        return _label(self.status)
