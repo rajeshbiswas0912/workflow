@@ -4,6 +4,9 @@ from typing import Literal
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field, SecretStr, field_validator, model_validator
 from sqlalchemy.engine import URL
+from app.config.aws_secrets import load_aws_secrets
+
+load_aws_secrets()
 
 class Settings(BaseSettings):
 
@@ -77,11 +80,11 @@ class Settings(BaseSettings):
             host=self.DB_HOST,
             port=self.DB_PORT,
             database=self.DB_NAME,
-            # query={"sslmode": "require"},
+            query={"sslmode": "require"} if self.is_production else {},
         )
 
 @lru_cache
 def get_settings() -> Settings:
-    return Settings()
+    return Settings() # type: ignore[call-arg]
 
 settings = get_settings()

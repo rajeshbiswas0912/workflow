@@ -8,3 +8,5 @@ pydantic-settings>=2.3
 pyjwt>=2.8
 bcrypt>=4.1
 python-multipart>=0.0.9
+mangum>=0.17
+boto3>=1.34
