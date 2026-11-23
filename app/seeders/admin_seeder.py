@@ -3,11 +3,8 @@
 Run from the project root:
     python -m app.seeders.seed_admin
 """
-import os
 from datetime import date
 from decimal import Decimal
-
-from dotenv import load_dotenv
 
 from app.config.database import SessionLocal
 from app.enums.employee import EmployeeStatus
@@ -21,15 +18,19 @@ from app.models.order import Order
 from app.models.order_item import OrderItem
 from app.models.product import Product
 from app.utils.security import hash_password
+from sqlalchemy import select
+from app.config.settings import settings
 
-load_dotenv()
-
-ADMIN_EMAIL = os.environ["ADMIN_EMAIL"]
-ADMIN_PASSWORD = os.environ["ADMIN_PASSWORD"]
+ADMIN_EMAIL = settings.ADMIN_EMAIL
+ADMIN_PASSWORD = settings.ADMIN_PASSWORD
 
 
 def main() -> None:
     with SessionLocal() as db:
+        if db.scalar(select(Employee.id).where(Employee.email == ADMIN_EMAIL)):
+            print("Admin already exists, skipping")
+            return
+
         # 1. Department
         department = Department(name="Administration", description="Company administration")
         db.add(department)
