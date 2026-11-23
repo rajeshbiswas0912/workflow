@@ -1,0 +1,7 @@
+.git
+.zed
+.env
+venv
+.venv
+__pycache__
+*.pyc
