@@ -1,4 +1,4 @@
-name: Build and push image
+name: Build and deploy
 
 on:
   push:
@@ -11,9 +11,11 @@ permissions:
 env:
   AWS_REGION: ap-southeast-2
   ECR_REPOSITORY: workflow-api
+  API_FUNCTION: workflow-api
+  MIGRATE_FUNCTION: workflow-migrate
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -31,4 +33,17 @@ jobs:
         run: |
           IMAGE=${{ steps.ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
           docker buildx build --platform linux/amd64 --provenance=false -t "$IMAGE" --push .
+          echo "IMAGE=$IMAGE" >> "$GITHUB_ENV"
           echo "Image pushed: $IMAGE" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Update API function
+        run: |
+          aws lambda update-function-code --function-name "$API_FUNCTION" --image-uri "$IMAGE" > /dev/null
+          aws lambda wait function-updated --function-name "$API_FUNCTION"
+          echo "Updated $API_FUNCTION" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Update migration function
+        run: |
+          aws lambda update-function-code --function-name "$MIGRATE_FUNCTION" --image-uri "$IMAGE" > /dev/null
+          aws lambda wait function-updated --function-name "$MIGRATE_FUNCTION"
+          echo "Updated $MIGRATE_FUNCTION (run it manually if this release has database changes)" >> "$GITHUB_STEP_SUMMARY"
