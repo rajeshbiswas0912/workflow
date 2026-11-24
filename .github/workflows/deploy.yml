@@ -13,7 +13,7 @@ env:
   ECR_REPOSITORY: workflow-api
   API_FUNCTION: workflow-api
   MIGRATE_FUNCTION: workflow-migrate
-  EMAIL_WORKER_FUNCTION: workflow-email-worker
+  EMAIL_WORKER_FUNCTION: workflow-email-queue
 
 jobs:
   deploy:
