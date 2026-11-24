@@ -4,6 +4,7 @@ from app.config.settings import settings
 from app.enums.employee import EmployeeStatus
 from app.repositories.employee_repository import EmployeeRepository
 from app.schemas.employee import EmployeeCreate, EmployeeList, EmployeeListItem, EmployeeResponse, EmployeeUpdate
+from app.services.email_queue_service import enqueue_welcome_email
 from app.utils.db_errors import db_errors
 from app.utils.exceptions import ForbiddenError, NotFoundError
 from app.utils.security import hash_password
@@ -48,7 +49,16 @@ class EmployeeService:
                 temporary_password_hash=hash_password(data.temporary_password),
             )
             self._db.commit()
-        return self.get_employee(new_id)
+
+        employee = self.get_employee(new_id)
+
+        enqueue_welcome_email(
+            employee_id=new_id,
+            email=data.email,
+            name=f"{data.first_name} {data.last_name}",
+            temporary_password=data.temporary_password,
+        )
+        return employee
 
     def update_employee(self, employee_id: int, data: EmployeeUpdate, actor: EmployeeResponse) -> EmployeeResponse:
         with db_errors(self._db):
