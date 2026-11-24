@@ -2,6 +2,7 @@ import json
 import os
 
 import boto3
+import traceback
 
 from app.emails import render_email
 
@@ -32,5 +33,6 @@ def handler(event, context):
         try:
             _send(json.loads(record["body"]))
         except Exception:
+            traceback.print_exc()
             failures.append({"itemIdentifier": record["messageId"]})
     return {"batchItemFailures": failures}
