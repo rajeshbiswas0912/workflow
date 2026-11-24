@@ -50,8 +50,6 @@ class Settings(BaseSettings):
     LOW_STOCK_THRESHOLD: int
 
     EMAIL_QUEUE_URL: str = ""
-    EMAIL_FROM: str = ""
-    APP_LOGIN_URL: str = ""
     AWS_REGION_NAME: str = "ap-southeast-2"
 
     @field_validator("SECRET_KEY")

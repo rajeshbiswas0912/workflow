@@ -13,6 +13,7 @@ env:
   ECR_REPOSITORY: workflow-api
   API_FUNCTION: workflow-api
   MIGRATE_FUNCTION: workflow-migrate
+  EMAIL_WORKER_FUNCTION: workflow-email-worker
 
 jobs:
   deploy:
@@ -47,3 +48,9 @@ jobs:
           aws lambda update-function-code --function-name "$MIGRATE_FUNCTION" --image-uri "$IMAGE" > /dev/null
           aws lambda wait function-updated --function-name "$MIGRATE_FUNCTION"
           echo "Updated $MIGRATE_FUNCTION (run it manually if this release has database changes)" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Update email worker function
+        run: |
+          aws lambda update-function-code --function-name "$EMAIL_WORKER_FUNCTION" --image-uri "$IMAGE" > /dev/null
+          aws lambda wait function-updated --function-name "$EMAIL_WORKER_FUNCTION"
+          echo "Updated $EMAIL_WORKER_FUNCTION" >> "$GITHUB_STEP_SUMMARY"
