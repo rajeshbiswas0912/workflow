@@ -53,6 +53,12 @@ def get_product_by_sku(sku: str, service: ProductService = Depends(get_product_s
     return ApiResponse(data=service.get_product_by_sku(sku), message="Product fetched")
 
 
+@router.get("/categories", response_model=ApiResponse[list[ProductCategory]], dependencies=[PROD_VIEW],
+            summary="Categories in use (for the dropdown and filter)")
+def list_categories(service: ProductService = Depends(get_product_service)):
+    return ApiResponse(data=service.list_categories(), message="Categories fetched")
+
+
 @router.get("/{product_id}", response_model=ApiResponse[ProductItem], dependencies=[PROD_VIEW])
 def get_product(product_id: int, service: ProductService = Depends(get_product_service)):
     return ApiResponse(data=service.get_product(product_id), message="Product fetched")
@@ -101,8 +107,3 @@ def delete_product(product_id: int, service: ProductService = Depends(get_produc
 @router.post("/{product_id}/restore", response_model=ApiResponse[ProductItem], dependencies=[PROD_FULL])
 def restore_product(product_id: int, service: ProductService = Depends(get_product_service)):
     return ApiResponse(data=service.restore_product(product_id), message="Product restored")
-
-@router.get("/categories", response_model=ApiResponse[list[ProductCategory]], dependencies=[PROD_VIEW],
-            summary="Categories in use (for the dropdown and filter)")
-def list_categories(service: ProductService = Depends(get_product_service)):
-    return ApiResponse(data=service.list_categories(), message="Categories fetched")
