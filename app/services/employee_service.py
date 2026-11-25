@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from app.config.settings import settings
 from app.enums.employee import EmployeeStatus
 from app.repositories.employee_repository import EmployeeRepository
-from app.schemas.employee import EmployeeCreate, EmployeeList, EmployeeListItem, EmployeeResponse, EmployeeUpdate
+from app.schemas.employee import EmployeeCreate, EmployeeList, EmployeeListItem, EmployeeResponse, EmployeeUpdate, SetPasswordRequest
 from app.services.email_queue_service import enqueue_welcome_email
 from app.utils.db_errors import db_errors
 from app.utils.exceptions import ForbiddenError, NotFoundError
@@ -100,6 +100,16 @@ class EmployeeService:
             self._repo.restore(employee_id)
             self._db.commit()
         return self.get_employee(employee_id)
+
+    def set_password(
+        self, employee_id: int, payload: SetPasswordRequest
+    ) -> None:
+        with db_errors(self._db):
+            hashed_password = hash_password(payload.new_password)
+            self._repo.set_password(
+                employee_id=employee_id, password_hash=hashed_password
+            )
+            self._db.commit()
 
     @staticmethod
     def _assert_can_touch_admin(actor: EmployeeResponse, role_id: int) -> None:

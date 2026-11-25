@@ -17,13 +17,6 @@ class EmployeeRepository:
             {"email": email},
         )
 
-    # def get_by_id(self, id: int) -> Row | None:
-    #     return fetch_one(
-    #         self._db,
-    #         "SELECT * FROM fn_employee_get(:id)",
-    #         {"id": id},
-    #     )
-
     def get_by_id(self, employee_id: int, include_deleted: bool = False) -> dict | None:
         row = self._db.execute(
             text("SELECT * FROM fn_employee_get(CAST(:id AS BIGINT), CAST(:include_deleted AS BOOLEAN))"),
@@ -93,4 +86,10 @@ class EmployeeRepository:
         self._db.execute(
             text("CALL sp_employee_reset_password(CAST(:id AS BIGINT), CAST(:hash AS TEXT))"),
             {"id": employee_id, "hash": temporary_password_hash},
+        )
+
+    def set_password(self, employee_id: int, password_hash: str) -> None:
+        self._db.execute(
+            text("CALL sp_employee_set_password(:p_id, :p_password_hash)"),
+            {"p_id": employee_id, "p_password_hash": password_hash},
         )

@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, Query
 from app.enums.employee import EmployeeStatus
 from app.enums.permission import PermissionArea, PermissionLevel
 from app.schemas.common import ApiResponse, ErrorResponse
-from app.schemas.employee import EmployeeCreate, EmployeeList, EmployeeResponse, EmployeeStatusUpdate, EmployeeUpdate
+from app.schemas.employee import EmployeeCreate, EmployeeList, EmployeeResponse, EmployeeStatusUpdate, EmployeeUpdate, SetPasswordRequest
 from app.services.employee_service import EmployeeService
 from app.services.permission_service import PermissionService
 from app.utils.dependencies import CurrentUser, get_employee_service, get_permission_service, require_permission
@@ -110,3 +110,17 @@ def restore_employee(
     service: EmployeeService = Depends(get_employee_service),
 ):
     return ApiResponse(data=service.restore_employee(employee_id, actor), message="Employee restored")
+
+@router.patch(
+    "/change-password",
+    response_model=ApiResponse[None]
+)
+def change_password(
+    payload: SetPasswordRequest,
+    user: CurrentUser,
+    service: EmployeeService = Depends(get_employee_service),
+):
+    service.set_password(
+        employee_id=user.id, payload=payload
+    )
+    return ApiResponse(data=None, message="Employee password updated successfully")

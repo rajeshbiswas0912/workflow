@@ -158,3 +158,13 @@ class EmployeeList(BaseModel):
     total: int
     limit: int
     offset: int
+
+class SetPasswordRequest(BaseModel):
+    new_password: str = Field(..., min_length=8)
+    confirm_password: str = Field(..., min_length=8)
+
+    @model_validator(mode="after")
+    def validate_passwords(self):
+        if self.new_password != self.confirm_password:
+            raise ValueError("New password and confirmation do not match")
+        return self
