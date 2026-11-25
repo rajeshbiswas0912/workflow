@@ -13,18 +13,23 @@ class AuthService:
 
     def login(self, email: str, password: str) -> Token:
         row = self._employee.get_by_email(email.strip().lower())
-        password_ok = verify_password(
-            password, row["password"] if row else get_dummy_hash()
-        )
-        if row is None or not password_ok or row["status"] != "active":
-            raise UnauthorizedError("Incorrect email or password")
 
-        if row["is_temporary_password"]:
-            raise ForbiddenError("Temporary password must be changed before logging in.")
+        is_temp = bool(row and row["is_temporary_password"])
+        stored_hash = (row["temporary_password"] if is_temp else row["password"]) if row else None
+        password_ok = verify_password(password, stored_hash or get_dummy_hash())
+
+        if row is None or not stored_hash or not password_ok or row["status"] != "active":
+            raise UnauthorizedError("Incorrect email or password")
 
         token, expires_in = create_access_token(row["id"])
         refresh_token, refresh_expires_in = create_refresh_token(row["id"])
-        return Token(access_token=token, expires_in=expires_in, refresh_token=refresh_token, refresh_expires_in=refresh_expires_in)
+        return Token(
+            access_token=token,
+            expires_in=expires_in,
+            refresh_token=refresh_token,
+            refresh_expires_in=refresh_expires_in,
+            is_temporary_password=is_temp
+        )
 
 
     def refresh(self, refresh_token: str) -> Token:

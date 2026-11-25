@@ -7,6 +7,7 @@ class Token(BaseModel):
     token_type: str = "bearer"
     expires_in: int
     refresh_expires_in: int
+    is_temporary_password: bool = False
 
 
 class RefreshTokenRequest(BaseModel):
